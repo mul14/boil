@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
-	"io"
 	"os/exec"
+	"strings"
 )
 
 func main() {
@@ -17,12 +17,29 @@ func main() {
 		os.Exit(1)
 	}
 
-	run(os.Args[1])
+	templateName := os.Args[1]
+	var destinationPath string
+
+	if len(os.Args) == 2 {
+		fmt.Println("Extract boilerplate in current directory? [y/N]")
+		var response string
+		fmt.Scanln(&response)
+		if response == "y" {
+			destinationPath = "."
+		} else {
+			fmt.Println("Cancel")
+			os.Exit(0)
+		}
+	} else {
+		destinationPath = os.Args[2]
+	}
+
+	run(templateName, destinationPath)
 }
 
-func run(templateName string) {
+func run(templateName string, destinationPath string) {
 	url := strings.Replace(
-		"https://github.com/mul14/%s/archive/master.zip",
+		"https://github.com/mul14/boilerplate-%s/archive/master.zip",
 		"%s",
 		templateName,
 		1,
@@ -32,7 +49,7 @@ func run(templateName string) {
 
 	filename := download(url)
 
-	extract(filename)
+	extract(filename, destinationPath)
 
 	os.Remove(filename)
 }
@@ -59,8 +76,8 @@ func download(url string) string {
 	return file.Name()
 }
 
-func extract(filename string) {
-	err := exec.Command("unzip", filename).Run()
+func extract(filename string, destinationPath string) {
+	err := exec.Command("unzip", "-j", filename, "-d", destinationPath).Run()
 	if err != nil {
 		printError(err.Error())
 		os.Exit(1)
