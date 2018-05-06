@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
+	"io"
+	"os/exec"
 )
 
 func main() {
@@ -18,37 +17,65 @@ func main() {
 		os.Exit(1)
 	}
 
-	templateName := os.Args[1]
-	url := strings.Replace("https://github.com/mul14/boilerplate-%s/archive/master.zip", "%s", templateName, 1)
+	run(os.Args[1])
+}
+
+func run(templateName string) {
+	url := strings.Replace(
+		"https://github.com/mul14/%s/archive/master.zip",
+		"%s",
+		templateName,
+		1,
+	)
 
 	fmt.Println("Fetching boilerplate from " + url)
 
 	filename := download(url)
 
-	exec.Command("unzip", filename).Run()
+	extract(filename)
 
 	os.Remove(filename)
-
-	fmt.Println("Done")
 }
 
 func download(url string) string {
 	file, err := ioutil.TempFile("", "")
 	if err != nil {
-		log.Fatal(err.Error())
+		fmt.Println(err.Error())
 	}
 
 	response, err := http.Get(url)
 	if err != nil {
-		log.Fatal(err.Error())
+		fmt.Println(err.Error())
 	}
-	defer response.Body.Close()
-
-	io.Copy(file, response.Body)
+	if response.StatusCode >= 200 && response.StatusCode <= 299 {
+		defer response.Body.Close()
+		io.Copy(file, response.Body)
+		fmt.Println(green("Boilerplate has been downloaded"))
+	} else {
+		fmt.Println(red("Boilerplate not found"))
+		os.Exit(1)
+	}
 
 	return file.Name()
 }
 
+func extract(filename string) {
+	err := exec.Command("unzip", filename).Run()
+	if err != nil {
+		printError(err.Error())
+		os.Exit(1)
+	}
+	fmt.Println(green("Boilerplate has been extracted"))
+}
+
 func green(string string) string {
 	return "\x1b[32;1m" + string + "\x1b[0m"
+}
+
+func red(string string) string {
+	return "\x1b[31;1m" + string + "\x1b[0m"
+}
+
+func printError(message string) {
+	fmt.Println(red(message))
 }
