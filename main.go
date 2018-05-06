@@ -26,6 +26,8 @@ func main() {
 
 	exec.Command("unzip", filename).Run()
 
+	os.Remove(filename)
+
 	fmt.Println("Done")
 }
 
