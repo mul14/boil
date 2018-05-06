@@ -13,7 +13,8 @@ import (
 
 func main() {
 	if len(os.Args) <= 1 {
-		fmt.Println("Please provide template name")
+		fmt.Println("Template name is required")
+		fmt.Println("Usage: " + green("boil <name>"))
 		os.Exit(1)
 	}
 
@@ -46,4 +47,8 @@ func download(url string) string {
 	io.Copy(file, response.Body)
 
 	return file.Name()
+}
+
+func green(string string) string {
+	return "\x1b[32;1m" + string + "\x1b[0m"
 }
